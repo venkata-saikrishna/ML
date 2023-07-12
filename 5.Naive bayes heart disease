@@ -1,0 +1,16 @@
+!pip install pgmpy
+import pandas as pd
+import numpy as np
+import csv
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.models import BayesianModel
+from pgmpy.inference import VariableElimination
+df=pd.read_csv("heart.csv")
+df=df.replace('?',np.nan)
+model=BayesianModel([('age','target'),('sex','target'),('cp','target'),('fbs','target'),('exang','target'),('target','restecg'),('target','chol')])
+model.fit(df,estimator=MaximumLikelihoodEstimator)
+inference=VariableElimination(model)
+q1=inference.query(variables=['target'],evidence={'restecg':1})
+print(q1)
+q2=inference.query(variables=['target'],evidence={'cp':2})
+print(q2)
