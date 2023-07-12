@@ -1,0 +1,22 @@
+arr=np.array(df)
+feature=np.array(df.iloc[:,0:6])
+target=np.array(df.iloc[:,-1])
+s=[0,0,0,0,0,0]
+g=[['?' for j in range(len(s))] for i in range(len(s))]
+for i in range(0,len(feature)):
+  if target[i]==1:
+    for j in range(len(s)):
+      if feature[i][j]!=s[j] and i==0:
+        s[j]=feature[i][j]
+      elif feature[i][j]!=s[j]:
+        s[j]='?'
+        g[i][j]='?'
+  if target[i]==0:
+    for j in range(len(s)):
+      if feature[i][j]!=s[j]:
+        g[j][j]=s[j]
+      else:
+        g[j][j]='?'
+
+print(s)
+print(g)
