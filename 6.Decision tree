@@ -1,0 +1,78 @@
+import pandas as pd
+import numpy as np
+from collections import Counter
+
+def entropy(labels):
+    counter = Counter(labels)
+    #print(counter,"counter")
+    probabilities = [count / len(labels) for count in counter.values()]
+    return -np.sum(probabilities * np.log2(probabilities))
+
+def information_gain(data, attribute, labels):
+    total_entropy = entropy(labels)
+    attribute_values = set(data[attribute])
+    weighted_entropy = 0
+    for value in attribute_values:
+        subset_labels = labels[data[attribute] == value]
+        weighted_entropy += len(subset_labels) / len(labels) * entropy(subset_labels)
+    return total_entropy - weighted_entropy
+
+def id3(data, attributes, labels):
+    # Base cases
+    if len(set(labels)) == 1:  # All instances have the same label
+        return labels[0]
+    if len(attributes) == 0:  # No more attributes to split on
+        most_common_label = Counter(labels).most_common(1)[0][0]
+        return most_common_label
+
+    # Attribute selection
+    information_gains = [information_gain(data, attribute, labels) for attribute in attributes]
+    best_attribute_index = np.argmax(information_gains)
+    best_attribute = attributes[best_attribute_index]
+
+    # Recursion
+    attribute_values = set(data[best_attribute])
+    tree = {best_attribute: {}}
+    for value in attribute_values:
+        #subset_indices = data[best_attribute] == value
+        subset_data = data[data[best_attribute]==value]
+        subset_labels = labels[data[best_attribute]==value]
+        if len(subset_data) == 0:
+            most_common_label = Counter(labels).most_common(1)[0][0]
+            tree[best_attribute][value] = most_common_label
+        else:
+            remaining_attributes = attributes[:best_attribute_index] + attributes[best_attribute_index + 1:]
+            tree[best_attribute][value] = id3(subset_data, remaining_attributes, subset_labels)
+
+    return tree
+def predict(instance, tree):
+    if isinstance(tree, dict)==False:
+        return tree
+    attribute=list(tree.keys())[0]
+    attribute_value = instance[list(tree.keys())[0]]
+    if attribute_value not in tree[attribute]:
+        return None
+
+    child = tree[list(tree.keys())[0]][attribute_value]
+    return predict(instance, child)
+
+# Example usage
+data = pd.read_csv('play_tennis.csv')
+attributes = data.columns[1:-1].to_list()
+#print(attributes)
+labels = data.iloc[:, -1].values
+#print(labels)
+#print(data)
+decision_tree = id3(data, attributes, labels)
+
+# Example prediction
+instance = {'outlook': 'Sunny', 'temp': 'Mild', 'humidity': 'High', 'wind': 'Strong'}
+prediction = predict(instance, decision_tree)
+print("Prediction:", prediction)
+print(decision_tree)
+
+
+#output
+# Prediction: No
+#{'outlook': {'Rain': {'wind': {'Strong': 'No', 'Weak': 'Yes'}},
+#'Overcast': 'Yes', 'Sunny': {'humidity': {'High': 'No', 'Normal': 'Yes'}}}}
